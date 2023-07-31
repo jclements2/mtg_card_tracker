@@ -1,8 +1,8 @@
 import shutil
-import sys
 import os
-
+import argparse
 import requests
+import pandas as pd
 
 
 def get_image(url):
@@ -32,18 +32,25 @@ def get_set(set_name):
 
 
 def main():
-    set_name = sys.argv[1]
-    optional_arg = None
-    if len(sys.argv) == 3:
-        optional_arg = sys.argv[2]
+    parser = argparse.ArgumentParser(
+        prog='MTG Card Tracker',
+        description='Downloads MTG card pricing data and card images',
+        epilog='More help stuff to come')
+    parser.add_argument('set_name')
+    parser.add_argument('-n', '--no-img', action='store_true')
+
+    args = parser.parse_args()
+
+    set_name = args.set_name
+    optional_arg = args.no_img
 
     card_count = 1
     file_name = f'set_list_{set_name}.csv'
-    image_dir = os.path.join('./', f'{set_name}_images')
+    image_dir = os.path.join('images', f'{set_name}_images')
     if os.path.exists(image_dir):
         shutil.rmtree(image_dir)
     os.mkdir(image_dir)
-    output_file = os.path.join('./', file_name)
+    output_file = os.path.join('output', file_name)
     if os.path.exists(output_file):
         os.remove(output_file)
     out_stream = open(output_file, 'a')
@@ -93,7 +100,7 @@ def main():
             collector_number = item["collector_number"]
             print(f'Retrieving "{card_name}": {collector_number}')
             out_stream.write(f'{collector_number},"{card_name}",{rarity},{type_line},{mana_cost},{cmc},{power},{toughness},{keywords},{price}\n')
-            if optional_arg != '--no-img':
+            if not optional_arg:
                 img_response = get_image(img_link)
                 img_filename = os.path.join(image_dir, f'{card_name}_{collector_number}.png')
                 with open(img_filename, 'wb') as f:
